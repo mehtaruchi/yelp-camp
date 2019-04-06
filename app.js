@@ -16,8 +16,9 @@ var commentRoutes    = require("./routes/comments"),
     campgroundRoutes = require("./routes/campgrounds"),
     indexRoutes      = require("./routes/index")
     
-mongoose.connect(process.env.DATABASEURL, { useNewUrlParser: true });
-//mongoose.connect("mongodb+srv://mehtaruchi:ruchitanvi@cluster0-bckux.mongodb.net/yelp_camp?retryWrites=true", { useNewUrlParser: true });
+var url = process.env.DATABASEURL || "mongodb://localhost/yelp_camp_v9"
+mongoose.connect(url, { useNewUrlParser: true });
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static(__dirname + "/public"));
@@ -25,6 +26,7 @@ app.use(methodOverride("_method"));
 app.use(flash());
 // seedDB(); //seed the database
 
+app.locals.moment = require('moment');
 // PASSPORT CONFIGURATION
 app.use(require("express-session")({
     secret: "Once again Rusty wins cutest dog!",
@@ -37,8 +39,16 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-app.use(function(req, res, next){
+app.use(async function(req, res, next){
    res.locals.currentUser = req.user;
+   if(req.user) {
+    try {
+      let user = await User.findById(req.user._id).populate('notifications', null, { isRead: false }).exec();
+      res.locals.notifications = user.notifications.reverse();
+    } catch(err) {
+      console.log(err.message);
+    }
+   }
    res.locals.error = req.flash("error");
    res.locals.success = req.flash("success");
    next();
