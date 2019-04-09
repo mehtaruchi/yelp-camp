@@ -13,9 +13,15 @@
 .lead{
     font-size: 26px;
 }
+
 #delete-form{
     display: inline;
 }
+
 .delete-form{
     display: inline;
+}
+
+.checked {
+    color: orange;
 }
